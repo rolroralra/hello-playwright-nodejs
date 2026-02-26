@@ -94,6 +94,49 @@ test.describe('관리자 기능', () => {
 });
 ```
 
+### ⚠️ fullyParallel + test.use({ storageState }) 주의사항
+
+`fullyParallel: true` 환경에서 `test.use({ storageState })`를 `describe` 블록 안에 선언하면, **같은 스코프의 `beforeAll` 내 `browser.newContext()`에도 `storageState` 설정이 적용**됩니다. 파일이 아직 없는 시점에 읽으려 하면 `ENOENT` 에러가 발생합니다.
+
+```typescript
+// ❌ 잘못된 패턴 - fullyParallel 환경에서 ENOENT 에러 발생
+test.describe('인증 테스트', () => {
+  test.use({ storageState: '.auth/user.json' });  // ← beforeAll에도 영향
+
+  test.beforeAll(async ({ browser }) => {  // ← browser 픽스처 = test.use() 적용 대상
+    const context = await browser.newContext();  // 아직 없는 파일을 읽으려 함 → ENOENT!
+    // ...
+  });
+});
+
+// ✅ 올바른 패턴 - playwright 픽스처로 픽스처 시스템 밖에서 직접 실행
+const STORAGE_STATE_PATH = '.auth/user.json';
+
+// describe 밖에 beforeAll 선언 → test.use() 영향 없음
+test.beforeAll(async ({ playwright }) => {
+  // playwright.chromium.launch()는 픽스처 시스템 외부 → test.use() 설정 무시
+  const browser = await playwright.chromium.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto('/login');
+  // ... 로그인 수행 ...
+  await context.storageState({ path: STORAGE_STATE_PATH });
+  await browser.close();
+});
+
+test.describe('인증 테스트', () => {
+  test.use({ storageState: STORAGE_STATE_PATH });  // beforeAll 완료 후 안전하게 사용
+
+  test('보안 페이지 접근', async ({ page }) => {
+    await page.goto('/secure');
+    await expect(page.locator('h2')).toContainText('Secure Area');
+  });
+});
+```
+
+> **핵심 원칙**: storageState 파일 생성은 `describe` 밖 `beforeAll`에서, `playwright.chromium.launch()`로 픽스처 시스템을 우회한다.
+
 ## 전략 2: 각 테스트마다 로그인
 
 로그인 플로우 자체를 테스트하거나, 다양한 계정으로 테스트가 필요한 경우입니다.

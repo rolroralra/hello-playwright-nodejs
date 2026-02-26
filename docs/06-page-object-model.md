@@ -68,7 +68,9 @@ export class TodoPage {
 
   // 검증 메서드도 포함 가능
   async expectTodoCount(count: number) {
-    await expect(this.page.getByRole('listitem')).toHaveCount(count);
+    // ⚠️ getByRole('listitem')은 필터 네비게이션 <li>도 매칭되므로
+    // CSS 선택자로 할 일 목록만 정확히 타겟팅
+    await expect(this.page.locator('.todo-list li')).toHaveCount(count);
   }
 }
 ```
