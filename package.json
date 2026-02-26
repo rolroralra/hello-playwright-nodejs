@@ -1,0 +1,28 @@
+{
+  "name": "hello-playwright",
+  "version": "1.0.0",
+  "description": "Playwright E2E 테스트 학습 프로젝트",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:basics": "playwright test tests/01-basics",
+    "test:locators": "playwright test tests/02-locators",
+    "test:actions": "playwright test tests/03-actions",
+    "test:assertions": "playwright test tests/04-assertions",
+    "test:page-objects": "playwright test tests/05-page-objects",
+    "test:api": "playwright test tests/06-api",
+    "test:auth": "playwright test tests/07-auth",
+    "test:fixtures": "playwright test tests/08-fixtures"
+  },
+  "keywords": ["playwright", "e2e", "testing"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.3.1",
+    "typescript": "^5.9.3"
+  }
+}
